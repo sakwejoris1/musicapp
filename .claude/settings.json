@@ -58,7 +58,11 @@
       "Bash(mkdir -p \"/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/uploads/audio\" \"/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/uploads/images\" \"/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/uploads/video\" && echo \"Dirs created\")",
       "Bash(flutter run *)",
       "Bash(echo \"Flutter run started in background \\(PID $!\\)\")",
-      "Bash(echo \"PID $!\")"
+      "Bash(echo \"PID $!\")",
+      "Bash(railway --version)",
+      "Bash(git -C \"/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend\" remote -v)",
+      "Bash(cat \"/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/.env\" | grep -v \"PASSWORD\\\\|SECRET\\\\|password\\\\|secret\" )",
+      "Read(//home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/models/**)"
     ],
     "additionalDirectories": [
       "/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend",
@@ -68,7 +72,8 @@
       "/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/controllers",
       "/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src",
       "/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/seeds",
-      "/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/uploads/audio"
+      "/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/uploads/audio",
+      "/home/sakwe/Documents/personal projects/music_mobile_fullstack/backend/src/config"
     ]
   }
 }

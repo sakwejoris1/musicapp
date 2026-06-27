@@ -154,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _SectionHeader(title: l.trending, onMore: () {}),
           SliverToBoxAdapter(
             child: SizedBox(
-              height: 220,
+              height: 260,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
