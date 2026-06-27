@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/storage_service.dart';
+import '../../providers/locale_provider.dart';
 import '../../utils/constants.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -339,21 +339,16 @@ class _MenuItem extends StatelessWidget {
   }
 }
 
-class _LanguageToggle extends StatefulWidget {
-  @override
-  State<_LanguageToggle> createState() => _LanguageToggleState();
-}
-
-class _LanguageToggleState extends State<_LanguageToggle> {
-  String _lang = StorageService().getLanguage();
-
+class _LanguageToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final localeProvider = context.watch<LocaleProvider>();
+    final lang = localeProvider.locale.languageCode;
+
     return GestureDetector(
       onTap: () {
-        final next = _lang == 'en' ? 'fr' : 'en';
-        StorageService().saveLanguage(next);
-        setState(() => _lang = next);
+        final next = lang == 'en' ? 'fr' : 'en';
+        context.read<LocaleProvider>().setLocale(Locale(next));
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -362,7 +357,7 @@ class _LanguageToggleState extends State<_LanguageToggle> {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
-          _lang.toUpperCase(),
+          lang.toUpperCase(),
           style: const TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.w700,

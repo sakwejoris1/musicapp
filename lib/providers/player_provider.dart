@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/song_model.dart';
-import '../services/audio_service.dart' as svc;
+import '../services/audio_service.dart';
 import '../services/api_service.dart';
 
 enum PlayerStatus { idle, loading, playing, paused, error }
@@ -9,7 +10,11 @@ enum PlayerStatus { idle, loading, playing, paused, error }
 enum PlayerRepeatMode { off, repeatAll, repeatOne }
 
 class PlayerProvider extends ChangeNotifier {
-  final _audio = svc.AudioPlayerService();
+  PlayerProvider(this._handler) {
+    _listenStreams();
+  }
+
+  final ChuyassiAudioHandler _handler;
   final _api = ApiService();
 
   PlayerStatus _status = PlayerStatus.idle;
@@ -22,6 +27,7 @@ class PlayerProvider extends ChangeNotifier {
   PlayerRepeatMode _repeat = PlayerRepeatMode.off;
   List<int> _shuffledIndices = [];
   String? _error;
+  SongModel? _paymentRequiredSong;
 
   PlayerStatus get status => _status;
   SongModel? get currentSong => _currentSong;
@@ -32,6 +38,7 @@ class PlayerProvider extends ChangeNotifier {
   bool get shuffle => _shuffle;
   PlayerRepeatMode get repeatMode => _repeat;
   String? get error => _error;
+  SongModel? get paymentRequiredSong => _paymentRequiredSong;
   bool get isPlaying => _status == PlayerStatus.playing;
   bool get hasQueue => _queue.isNotEmpty;
 
@@ -44,16 +51,19 @@ class PlayerProvider extends ChangeNotifier {
   bool get hasNext => _queueIndex < _queue.length - 1;
 
   void _listenStreams() {
-    _audio.positionStream.listen((pos) {
+    _handler.positionStream.listen((pos) {
       _position = pos;
       notifyListeners();
     });
-    _audio.durationStream.listen((dur) {
+    _handler.durationStream.listen((dur) {
       if (dur != null) _duration = dur;
       notifyListeners();
     });
-    _audio.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
+    _handler.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.ready && _handler.isPlaying) {
+        _status = PlayerStatus.playing;
+        notifyListeners();
+      } else if (state.processingState == ProcessingState.completed) {
         _onSongCompleted();
       }
     });
@@ -63,13 +73,21 @@ class PlayerProvider extends ChangeNotifier {
     _status = PlayerStatus.loading;
     _currentSong = song;
     _error = null;
+    _paymentRequiredSong = null;
     notifyListeners();
     try {
       final token = await _api.getStreamToken(song.id);
-      await _audio.playSong(song, token);
-      await _api.recordListen(song.id);
+      await _handler.playSong(song, token);
+      _api.recordListen(song.id);
       _status = PlayerStatus.playing;
-      _listenStreams();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 402) {
+        _paymentRequiredSong = song;
+        _status = PlayerStatus.idle;
+      } else {
+        _error = e.message ?? e.toString();
+        _status = PlayerStatus.error;
+      }
     } catch (e) {
       _error = e.toString();
       _status = PlayerStatus.error;
@@ -77,15 +95,20 @@ class PlayerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearPaymentRequired() {
+    _paymentRequiredSong = null;
+    notifyListeners();
+  }
+
   Future<void> playOffline(SongModel song, String localPath) async {
     _status = PlayerStatus.loading;
     _currentSong = song;
+    _error = null;
     notifyListeners();
     try {
-      await _audio.playFromFile(song, localPath);
-      await _api.recordListen(song.id, offline: true);
+      await _handler.playFromFile(song, localPath);
+      _api.recordListen(song.id, offline: true);
       _status = PlayerStatus.playing;
-      _listenStreams();
     } catch (e) {
       _error = e.toString();
       _status = PlayerStatus.error;
@@ -96,9 +119,7 @@ class PlayerProvider extends ChangeNotifier {
   void setQueue(List<SongModel> songs, {int startIndex = 0}) {
     _queue = List.from(songs);
     _queueIndex = startIndex;
-    if (_shuffle) {
-      _buildShuffleIndices(startIndex);
-    }
+    if (_shuffle) _buildShuffleIndices(startIndex);
     notifyListeners();
     playSong(songs[startIndex]);
   }
@@ -116,13 +137,13 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   Future<void> pause() async {
-    await _audio.pause();
+    await _handler.pause();
     _status = PlayerStatus.paused;
     notifyListeners();
   }
 
   Future<void> resume() async {
-    await _audio.resume();
+    await _handler.play();
     _status = PlayerStatus.playing;
     notifyListeners();
   }
@@ -137,11 +158,11 @@ class PlayerProvider extends ChangeNotifier {
 
   Future<void> seekTo(double value) async {
     final target = Duration(milliseconds: (_duration.inMilliseconds * value).round());
-    await _audio.seekTo(target);
+    await _handler.seek(target);
   }
 
   Future<void> seekToDuration(Duration target) async {
-    await _audio.seekTo(target);
+    await _handler.seek(target);
   }
 
   Future<void> skipNext() async {
@@ -155,7 +176,7 @@ class PlayerProvider extends ChangeNotifier {
 
   Future<void> skipPrevious() async {
     if (_position.inSeconds > 3) {
-      await seekTo(0);
+      await _handler.seek(Duration.zero);
     } else if (_queueIndex > 0) {
       _queueIndex--;
       await playSong(_queue[_queueIndex]);
@@ -164,9 +185,7 @@ class PlayerProvider extends ChangeNotifier {
 
   void toggleShuffle() {
     _shuffle = !_shuffle;
-    if (_shuffle) {
-      _buildShuffleIndices(_queueIndex);
-    }
+    if (_shuffle) _buildShuffleIndices(_queueIndex);
     notifyListeners();
   }
 
@@ -210,7 +229,7 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   Future<void> stop() async {
-    await _audio.stop();
+    await _handler.stop();
     _status = PlayerStatus.idle;
     _currentSong = null;
     _position = Duration.zero;
@@ -220,7 +239,7 @@ class PlayerProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _audio.dispose();
+    _handler.stop();
     super.dispose();
   }
 }

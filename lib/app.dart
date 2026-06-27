@@ -5,14 +5,16 @@ import 'config/theme.dart';
 import 'config/routes.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/auth_provider.dart';
+import 'providers/locale_provider.dart';
 import 'providers/music_provider.dart';
 import 'providers/player_provider.dart';
 import 'providers/shop_provider.dart';
 import 'providers/playlist_provider.dart';
-import 'services/storage_service.dart';
+import 'services/audio_service.dart';
 
 class ChuyassiApp extends StatefulWidget {
-  const ChuyassiApp({super.key});
+  const ChuyassiApp({super.key, required this.audioHandler});
+  final ChuyassiAudioHandler audioHandler;
 
   @override
   State<ChuyassiApp> createState() => _ChuyassiAppState();
@@ -20,11 +22,13 @@ class ChuyassiApp extends StatefulWidget {
 
 class _ChuyassiAppState extends State<ChuyassiApp> {
   late final AuthProvider _auth;
+  late final LocaleProvider _locale;
 
   @override
   void initState() {
     super.initState();
     _auth = AuthProvider();
+    _locale = LocaleProvider();
   }
 
   @override
@@ -32,8 +36,9 @@ class _ChuyassiAppState extends State<ChuyassiApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _auth),
+        ChangeNotifierProvider.value(value: _locale),
         ChangeNotifierProvider(create: (_) => MusicProvider()),
-        ChangeNotifierProvider(create: (_) => PlayerProvider()),
+        ChangeNotifierProvider(create: (_) => PlayerProvider(widget.audioHandler)),
         ChangeNotifierProvider(create: (_) => ShopProvider()),
         ChangeNotifierProvider(create: (_) => PlaylistProvider()),
       ],
@@ -48,17 +53,15 @@ class _AppView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Watch auth so the router rebuilds on login/logout
     context.watch<AuthProvider>();
-    final storage = StorageService();
-    final langCode = storage.getLanguage();
+    final locale = context.watch<LocaleProvider>().locale;
 
     return MaterialApp.router(
       title: 'Chuyassi',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       routerConfig: buildRouter(auth),
-      locale: Locale(langCode),
+      locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,

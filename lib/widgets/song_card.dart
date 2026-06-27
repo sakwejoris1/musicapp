@@ -92,7 +92,7 @@ class _FullSongCard extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: song.isPurchased ? onPlay : onBuy,
+                      onTap: onPlay,
                       child: Container(
                         width: 30,
                         height: 30,
@@ -100,10 +100,8 @@ class _FullSongCard extends StatelessWidget {
                           color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          song.isPurchased
-                              ? Icons.play_arrow_rounded
-                              : Icons.shopping_cart_outlined,
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
                           color: Colors.white,
                           size: 16,
                         ),
@@ -181,20 +179,16 @@ class _CompactSongCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: song.isPurchased ? onPlay : onBuy,
+            onTap: onPlay,
             child: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(
-                color: song.isPurchased
-                    ? AppColors.primary
-                    : AppColors.darkSurface,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                song.isPurchased
-                    ? Icons.play_arrow_rounded
-                    : Icons.lock_outline,
+              child: const Icon(
+                Icons.play_arrow_rounded,
                 color: Colors.white,
                 size: 18,
               ),

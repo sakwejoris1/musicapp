@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../utils/constants.dart';
 
@@ -8,17 +9,19 @@ class ApiService {
   ApiService._internal() {
     _dio = Dio(BaseOptions(
       baseUrl: AppConstants.baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 60),
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
       headers: {'Content-Type': 'application/json'},
     ));
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await _storage.read(key: AppConstants.keyToken);
         if (token != null) options.headers['Authorization'] = 'Bearer $token';
+        debugPrint('[API] ${options.method} ${options.uri}');
         handler.next(options);
       },
       onError: (error, handler) {
+        debugPrint('[API ERROR] ${error.requestOptions.method} ${error.requestOptions.uri} → ${error.response?.statusCode} ${error.message}');
         handler.next(error);
       },
     ));

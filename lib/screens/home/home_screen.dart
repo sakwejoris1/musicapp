@@ -27,7 +27,24 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MusicProvider>().loadHome();
       context.read<ShopProvider>().loadProducts();
+
+      context.read<PlayerProvider>().addListener(_onPlayerChange);
     });
+  }
+
+  @override
+  void dispose() {
+    context.read<PlayerProvider>().removeListener(_onPlayerChange);
+    super.dispose();
+  }
+
+  void _onPlayerChange() {
+    final player = context.read<PlayerProvider>();
+    final song = player.paymentRequiredSong;
+    if (song != null) {
+      player.clearPaymentRequired();
+      _buyContent(context, song);
+    }
   }
 
   void _onNavTap(int i) {
@@ -184,11 +201,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _playSong(BuildContext context, List<SongModel> queue, int index) {
-    final song = queue[index];
-    if (!song.isPurchased) {
-      _buyContent(context, song);
-      return;
-    }
     context.read<PlayerProvider>().setQueue(queue, startIndex: index);
   }
 

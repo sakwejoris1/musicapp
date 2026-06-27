@@ -1,6 +1,7 @@
 class AppConstants {
-  static const baseUrl = 'http://localhost:3000/api';
-  static const wsUrl = 'ws://localhost:3000';
+  // Use 10.0.2.2 for Android emulator, or the machine's LAN IP for a real device
+  static const baseUrl = 'http://192.168.1.202:3000/api';
+  static const wsUrl = 'ws://192.168.1.202:3000';
 
   // Price limits
   static const songPriceMin = 50;
