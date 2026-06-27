@@ -1,0 +1,20 @@
+{
+  "name": "Chuyassi — African Music",
+  "short_name": "Chuyassi",
+  "description": "Stream, download and support African artists directly. Pay via Orange Money, MTN MoMo or Neero.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0D0D1A",
+  "theme_color": "#6C3FE8",
+  "orientation": "portrait-primary",
+  "lang": "fr-CM",
+  "categories": ["music", "entertainment"],
+  "prefer_related_applications": false,
+  "screenshots": [],
+  "icons": [
+    { "src": "icons/Icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/Icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/Icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/Icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
